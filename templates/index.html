@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Início - AMAJG Voluntariado{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto text-center py-10">
+    <div class="mb-6 flex justify-center">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo AMAJG" class="h-32 object-contain shadow-lg rounded-xl p-2 bg-white">
+    </div>
+    <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">Emissão de Carteirinha de Voluntário Estudantil</h1>
+    <p class="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+        Associação de Moradores e Amigos do Jardim Gláucia (AMAJG) — Belford Roxo/RJ. 
+        Emissão oficial em conformidade com a Lei nº 9.608/1998.
+    </p>
+    <div class="flex flex-wrap justify-center gap-4">
+        <a href="{{ url_for('public_query') }}" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl shadow transition flex items-center">
+            <i class="fas fa-search mr-2"></i> Consultar Carteirinha por Código
+        </a>
+        <a href="{{ url_for('login') }}" class="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold px-6 py-3 rounded-xl shadow transition flex items-center">
+            <i class="fas fa-lock mr-2"></i> Acesso Administrativo
+        </a>
+    </div>
+</div>
+{% endblock %}
