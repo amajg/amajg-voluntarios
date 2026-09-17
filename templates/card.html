@@ -1,0 +1,14 @@
+<!-- HEADER -->
+            <div class="flex items-center justify-between border-b border-slate-700 pb-1">
+                <div class="flex items-center space-x-1.5">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="h-7 w-auto bg-white p-0.5 rounded shadow-sm">
+                    <div>
+                        <div class="text-[9px] font-extrabold tracking-tight text-slate-900 leading-tight">CARTEIRINHA DE VOLUNTÁRIO ESTUDANTIL</div>
+                        <div class="text-[6px] font-bold text-emerald-900 leading-none">AMAJG - ASSOCIAÇÃO DE MORADORES E AMIGOS DO JARDIM GLAÚCIA</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div id="qrcode" class="bg-white p-0.5 rounded shadow-sm inline-block"></div>
+                    <div class="text-[5px] font-mono text-slate-700 mt-0.5">{{ v.code }}</div>
+                </div>
+            </div>
