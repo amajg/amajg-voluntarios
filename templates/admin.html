@@ -2,29 +2,28 @@
 {% block title %}Painel Administrativo - AMAJG{% endblock %}
 {% block content %}
 <div class="space-y-8">
-    <!-- Cabeçalho do Painel -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
         <div class="bg-emerald-800 text-white py-4 px-6 flex justify-between items-center">
             <div>
                 <h2 class="text-xl font-bold">Gerenciamento de Voluntários</h2>
-                <p class="text-xs text-emerald-200">Painel de controle administrativo</p>
+                <p class="text-xs text-emerald-200">Painel de controle administrativo • {{ admins_count }} gestores autorizados</p>
             </div>
-            <span class="bg-emerald-700 px-3 py-1 rounded text-xs font-mono">Admin: {{ session.get('admin_email', 'Administrador') }}</span>
+            <span class="bg-emerald-700 px-3 py-1 rounded text-xs font-mono">Admin: {{ session.get('admin_email') }}</span>
         </div>
         <div class="p-6 md:p-8">
-            <p class="text-sm text-slate-600 mb-4">Cadastre novos voluntários estudantes e emita as carteirinhas oficiais da AMAJG.</p>
+            <p class="text-sm text-slate-600 mb-4">Cadastre novos voluntários estudantes com foto, gere códigos únicos e emita carteirinhas oficiais.</p>
             <a href="{{ url_for('public_query') }}" class="inline-block bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm hover:bg-slate-300 transition">
                 <i class="fas fa-search mr-1"></i> Ir para Consulta Pública
             </a>
         </div>
     </div>
 
-    <!-- Formulário de Cadastro de Voluntário -->
+    <!-- Formulário com Multipart (Foto) -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
         <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center">
             <i class="fas fa-user-plus mr-2 text-emerald-700"></i> Cadastrar Novo Voluntário Estudantil
         </h3>
-        <form action="{{ url_for('admin_dashboard') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form action="{{ url_for('admin_dashboard') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
                 <input type="text" name="nome" required placeholder="Ex: João da Silva" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
@@ -41,15 +40,19 @@
                 <label class="block text-sm font-medium text-slate-700 mb-1">Período / Ano</label>
                 <input type="text" name="periodo" placeholder="Ex: 3º Ano / 2º Período" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
             </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Foto do Voluntário (Opcional - PNG/JPG)</label>
+                <input type="file" name="photo" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+            </div>
             <div class="md:col-span-2 pt-2">
                 <button type="submit" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition shadow">
-                    <i class="fas fa-id-card mr-2"></i> Gerar e Cadastrar Carteirinha
+                    <i class="fas fa-id-card mr-2"></i> Gerar e Cadastrar Carteirinha com QR Code
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Lista de Voluntários Cadastrados -->
+    <!-- Lista de Voluntários com Data e Responsável -->
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
         <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center">
             <i class="fas fa-users mr-2 text-emerald-700"></i> Voluntários Cadastrados
@@ -59,21 +62,30 @@
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                            <th class="py-3 px-4 font-semibold">Foto</th>
                             <th class="py-3 px-4 font-semibold">Código</th>
                             <th class="py-3 px-4 font-semibold">Nome</th>
                             <th class="py-3 px-4 font-semibold">Instituição</th>
-                            <th class="py-3 px-4 font-semibold text-center">Ações</th>
+                            <th class="py-3 px-4 font-semibold">Data / Responsável</th>
+                            <th class="py-3 px-4 font-semibold text-center">Ações de Impressão (9x5cm)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
                         {% for v in voluntariados %}
                         <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4">
+                                <img src="{{ url_for('static', filename='uploads/' + v.photo) if v.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-10 h-10 object-cover rounded-full border border-emerald-600">
+                            </td>
                             <td class="py-3 px-4 font-mono text-xs text-emerald-800 font-bold">{{ v.codigo }}</td>
                             <td class="py-3 px-4 font-medium text-slate-800">{{ v.nome }}</td>
-                            <td class="py-3 px-4 text-slate-600">{{ v.instituicao }}</td>
+                            <td class="py-3 px-4 text-slate-600 text-xs">{{ v.instituicao }}</td>
+                            <td class="py-3 px-4 text-xs text-slate-500">
+                                {{ v.data_cadastro.split('às')[0] if 'às' in v.data_cadastro else v.data_cadastro }}<br>
+                                <span class="italic text-[10px] text-slate-400">por {{ v.cadastrado_por }}</span>
+                            </td>
                             <td class="py-3 px-4 text-center space-x-2">
-                                <a href="{{ url_for('view_card', codigo=v.codigo) }}" target="_blank" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-3 py-1 rounded text-xs font-semibold inline-block transition">
-                                    <i class="fas fa-print mr-1"></i> Ver/Imprimir Carteirinha
+                                <a href="{{ url_for('view_card', codigo=v.codigo) }}" target="_blank" class="bg-emerald-700 text-white hover:bg-emerald-600 px-3 py-1.5 rounded text-xs font-semibold inline-block transition">
+                                    <i class="fas fa-print mr-1"></i> Prévia e Imprimir (9x5cm)
                                 </a>
                             </td>
                         </tr>
