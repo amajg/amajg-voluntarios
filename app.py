@@ -1,8 +1,10 @@
 import os
 import random
 import string
+import base64
+import json
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
@@ -200,7 +202,6 @@ def admin_dashboard():
         flash(f'Voluntário cadastrado com sucesso! Código: {codigo_sequencial}', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    # Filtro de Busca (NOME, CPF ou Código da Carteirinha)
     search_query = request.args.get('q', '').strip()
     query_obj = Volunteer.query
     if search_query:
@@ -214,6 +215,71 @@ def admin_dashboard():
         )
     volunteers_list = query_obj.order_by(Volunteer.id.desc()).all()
     return render_template('admin.html', voluntariados=volunteers_list, is_main_admin=session.get('is_main_admin', False), search_query=search_query)
+
+@app.route('/admin/backup-json')
+def export_backup_json():
+    if not session.get('admin_logged'):
+        return redirect(url_for('login'))
+    
+    volunteers = Volunteer.query.all()
+    data_list = []
+    
+    for v in volunteers:
+        vol_dict = {
+            'id': v.id,
+            'codigo': v.codigo,
+            'nome': v.nome,
+            'cpf': v.cpf,
+            'nascimento': v.nascimento,
+            'sexo': v.sexo,
+            'estado_civil': v.estado_civil,
+            'profissao': v.profissao,
+            'doador_sangue': v.doador_sangue,
+            'doador_orgaos': v.doador_orgaos,
+            'cep': v.cep,
+            'rua': v.rua,
+            'numero': v.numero,
+            'complemento': v.complemento,
+            'referencia': v.referencia,
+            'bairro': v.bairro,
+            'municipio': v.municipio,
+            'matricula': v.matricula,
+            'instituicao': v.instituicao,
+            'curso': v.curso,
+            'periodo': v.periodo,
+            'whatsapp': v.whatsapp,
+            'email_voluntario': v.email_voluntario,
+            'photo_filename': v.photo,
+            'photo_base64': None,
+            'data_cadastro': v.data_cadastro,
+            'validade': v.validade,
+            'status': v.status,
+            'cadastrado_por': v.cadastrado_por
+        }
+        
+        if v.photo and v.photo != 'default_user.png':
+            img_path = os.path.join(app.config['UPLOAD_FOLDER'], v.photo)
+            if os.path.exists(img_path):
+                with open(img_path, 'rb') as f:
+                    vol_dict['photo_base64'] = base64.b64encode(f.read()).decode('utf-8')
+                    
+        data_list.append(vol_dict)
+        
+    backup_payload = {
+        'sistema': 'AMAJG - Gestão de Voluntários',
+        'data_backup': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'total_registros': len(data_list),
+        'voluntarios': data_list
+    }
+    
+    json_str = json.dumps(backup_payload, ensure_ascii=False, indent=4)
+    filename = f"backup_amajg_voluntarios_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    
+    return Response(
+        json_str,
+        mimetype='application/json',
+        headers={'Content-Disposition': f'attachment;filename={filename}'}
+    )
 
 @app.route('/admin/toggle-status/<int:vol_id>', methods=['POST'])
 def toggle_status(vol_id):
