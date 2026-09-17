@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'amajg_secret_key_production_db_v4'
+app.secret_key = 'amajg_secret_key_production_db_v5'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -200,8 +200,31 @@ def admin_dashboard():
         flash(f'Voluntário cadastrado com sucesso! Código: {codigo_sequencial}', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    volunteers_list = Volunteer.query.order_by(Volunteer.id.desc()).all()
-    return render_template('admin.html', voluntariados=volunteers_list, is_main_admin=session.get('is_main_admin', False))
+    # Filtro de Busca (NOME, CPF ou Código da Carteirinha)
+    search_query = request.args.get('q', '').strip()
+    query_obj = Volunteer.query
+    if search_query:
+        term = f"%{search_query}%"
+        query_obj = query_obj.filter(
+            db.or_(
+                Volunteer.nome.ilike(term),
+                Volunteer.cpf.ilike(term),
+                Volunteer.codigo.ilike(term)
+            )
+        )
+    volunteers_list = query_obj.order_by(Volunteer.id.desc()).all()
+    return render_template('admin.html', voluntariados=volunteers_list, is_main_admin=session.get('is_main_admin', False), search_query=search_query)
+
+@app.route('/admin/toggle-status/<int:vol_id>', methods=['POST'])
+def toggle_status(vol_id):
+    if not session.get('admin_logged') or not session.get('is_main_admin'):
+        flash('Apenas o administrador principal pode alterar o status.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    vol = Volunteer.query.get_or_404(vol_id)
+    vol.status = 'Inativo' if vol.status == 'Ativo' else 'Ativo'
+    db.session.commit()
+    flash(f'Status do voluntário {vol.codigo} alterado para {vol.status}.', 'info')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/edit/<int:vol_id>', methods=['GET', 'POST'])
 def edit_volunteer(vol_id):
