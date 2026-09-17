@@ -13,15 +13,17 @@
 
     <!-- Padrão 9x5cm harmônico e de alta legibilidade -->
     <div class="printable-card bg-white border-2 border-emerald-800 rounded-xl p-2 flex flex-col justify-between w-[9cm] h-[5cm] shadow-xl box-border">
-        <!-- Topo: Título em Caixa Alta e Negrito -->
+        <!-- Topo: Título em Caixa Alta e Negrito + Subtítulo em Caixa Alta sem negrito -->
         <div class="flex items-center justify-between border-b pb-0.5 border-emerald-300">
             <div class="flex items-center space-x-1.5">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" class="h-5 w-auto" alt="Logo">
                 <div>
-                    <h4 class="font-extrabold text-[8.5px] text-emerald-900 leading-tight uppercase font-bold">
+                    <h4 class="font-extrabold text-[8px] text-emerald-900 leading-tight uppercase">
                         CARTEIRINHA DE VOLUNTARIADO ESTUDANTIL
                     </h4>
-                    <p class="text-[5.5px] text-slate-600 font-semibold uppercase">AMAJG • Belford Roxo/RJ</p>
+                    <p class="text-[5px] text-slate-700 font-normal uppercase leading-tight">
+                        ASSOCIAÇÃO DE MORADORES E AMIGOS DO JARDIM GLÁUCIA - BELFORD ROXO/RJ
+                    </p>
                 </div>
             </div>
             <span class="bg-emerald-800 text-white font-mono font-bold text-[7px] px-1.5 py-0.5 rounded shadow-sm">
