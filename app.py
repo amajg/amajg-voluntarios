@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'amajg_secret_key_production_db_v3'
+app.secret_key = 'amajg_secret_key_production_db_v4'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -29,6 +29,21 @@ class Volunteer(db.Model):
     nome = db.Column(db.String(120), nullable=False)
     cpf = db.Column(db.String(30), nullable=True)
     nascimento = db.Column(db.String(30), nullable=True)
+    sexo = db.Column(db.String(30), nullable=True)
+    estado_civil = db.Column(db.String(40), nullable=True)
+    profissao = db.Column(db.String(100), nullable=True)
+    doador_sangue = db.Column(db.String(10), nullable=True)
+    doador_orgaos = db.Column(db.String(10), nullable=True)
+    
+    # Endereço
+    cep = db.Column(db.String(20), nullable=True)
+    rua = db.Column(db.String(150), nullable=True)
+    numero = db.Column(db.String(30), nullable=True)
+    complemento = db.Column(db.String(100), nullable=True)
+    referencia = db.Column(db.String(150), nullable=True)
+    bairro = db.Column(db.String(100), nullable=True)
+    municipio = db.Column(db.String(100), nullable=True)
+    
     matricula = db.Column(db.String(50), nullable=True)
     instituicao = db.Column(db.String(150), nullable=False)
     curso = db.Column(db.String(150), nullable=True)
@@ -117,6 +132,20 @@ def admin_dashboard():
             except:
                 pass
                 
+        sexo = request.form.get('sexo', '')
+        estado_civil = request.form.get('estado_civil', '')
+        profissao = request.form.get('profissao', '')
+        doador_sangue = request.form.get('doador_sangue', 'Não')
+        doador_orgaos = request.form.get('doador_orgaos', 'Não')
+        
+        cep = request.form.get('cep', '')
+        rua = request.form.get('rua', '')
+        numero = request.form.get('numero', '')
+        complemento = request.form.get('complemento', '')
+        referencia = request.form.get('referencia', '')
+        bairro = request.form.get('bairro', '')
+        municipio = request.form.get('municipio', '')
+        
         matricula = request.form.get('matricula', '')
         instituicao = request.form.get('instituicao')
         curso = request.form.get('curso', '')
@@ -142,6 +171,18 @@ def admin_dashboard():
             nome=nome,
             cpf=cpf,
             nascimento=nascimento,
+            sexo=sexo,
+            estado_civil=estado_civil,
+            profissao=profissao,
+            doador_sangue=doador_sangue,
+            doador_orgaos=doador_orgaos,
+            cep=cep,
+            rua=rua,
+            numero=numero,
+            complemento=complemento,
+            referencia=referencia,
+            bairro=bairro,
+            municipio=municipio,
             matricula=matricula,
             instituicao=instituicao,
             curso=curso,
@@ -182,6 +223,21 @@ def edit_volunteer(vol_id):
         else:
             if raw_nasc:
                 vol.nascimento = raw_nasc
+                
+        vol.sexo = request.form.get('sexo', '')
+        vol.estado_civil = request.form.get('estado_civil', '')
+        vol.profissao = request.form.get('profissao', '')
+        vol.doador_sangue = request.form.get('doador_sangue', 'Não')
+        vol.doador_orgaos = request.form.get('doador_orgaos', 'Não')
+        
+        vol.cep = request.form.get('cep', '')
+        vol.rua = request.form.get('rua', '')
+        vol.numero = request.form.get('numero', '')
+        vol.complemento = request.form.get('complemento', '')
+        vol.referencia = request.form.get('referencia', '')
+        vol.bairro = request.form.get('bairro', '')
+        vol.municipio = request.form.get('municipio', '')
+        
         vol.matricula = request.form.get('matricula', '')
         vol.instituicao = request.form.get('instituicao')
         vol.curso = request.form.get('curso', '')
@@ -202,7 +258,6 @@ def edit_volunteer(vol_id):
         flash('Cadastro atualizado com sucesso!', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    # Converter data DD/MM/YYYY para YYYY-MM-DD para pré-preencher input date se houver
     nasc_input = vol.nascimento
     if vol.nascimento and '/' in vol.nascimento:
         try:
