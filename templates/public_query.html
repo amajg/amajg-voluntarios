@@ -1,21 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Consulta Pública - AMAJG{% endblock %}
+{% block title %}Consulta Pública de Voluntário - AMAJG{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto py-8">
-    <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-slate-100 mb-8">
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-slate-800">Consulta Pública de Voluntário</h2>
-            <p class="text-sm text-slate-600 mt-1">Digite o código único da carteirinha para validar as informações na AMAJG.</p>
-        </div>
-        <form method="POST" class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-grow">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-barcode"></i></span>
-                <input type="text" name="code" value="{{ query_code }}" required placeholder="Ex: AMAJG-12345" class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono uppercase text-sm">
-            </div>
-            <button type="submit" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl shadow transition flex items-center justify-center">
-                <i class="fas fa-search mr-2"></i> Consultar
+<div class="max-w-2xl mx-auto my-8 space-y-6">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
+        <h2 class="text-xl font-bold text-emerald-900 mb-2">Consulta Pública de Voluntário (Veracidade)</h2>
+        <p class="text-xs text-slate-600 mb-6">Consulte pelo código da carteirinha (Ex: AMAJG-00001) para atestar a veracidade e o status do voluntário.</p>
+        
+        <form method="POST" action="{{ url_for('public_query') }}" class="flex gap-2">
+            <input type="text" name="code" value="{{ query_code }}" placeholder="Digite o código (ex: AMAJG-00001)" required class="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-mono uppercase focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+            <button type="submit" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition shadow">
+                <i class="fas fa-search mr-1"></i> Consultar
             </button>
         </form>
     </div>
+
+    {% if volunteer %}
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-6">
+            <img src="{{ url_for('static', filename='uploads/' + volunteer.photo) if volunteer.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-24 h-32 object-cover rounded-xl border-2 border-emerald-700 shadow-md">
+            <div class="flex-1 w-full text-center md:text-left">
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+                    <span class="bg-emerald-100 text-emerald-900 font-mono font-bold text-xs px-2.5 py-1 rounded">
+                        CÓD: {{ volunteer.codigo }}
+                    </span>
+                    {% if volunteer.status == 'Ativo' %}
+                        <span class="bg-green-100 text-green-800 font-bold px-3 py-1 rounded text-xs">
+                            <i class="fas fa-check-circle mr-1"></i> STATUS: ATIVO
+                        </span>
+                    {% else %}
+                        <span class="bg-red-100 text-red-800 font-bold px-3 py-1 rounded text-xs">
+                            <i class="fas fa-times-circle mr-1"></i> STATUS: INATIVO
+                        </span>
+                    {% endif %}
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 uppercase">{{ volunteer.nome }}</h3>
+                <p class="text-xs text-slate-600 mt-1 font-semibold">{{ volunteer.instituicao }} — {{ volunteer.curso }} ({{ volunteer.periodo }})</p>
+                <p class="text-[11px] text-slate-400 mt-1">Validade: <strong>{{ volunteer.validade }}</strong></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <span class="block text-slate-400 font-semibold mb-1">CPF</span>
+                <span class="font-bold text-slate-800">{{ volunteer.cpf or '-' }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <span class="block text-slate-400 font-semibold mb-1">Data de Nascimento</span>
+                <span class="font-bold text-slate-800">{{ volunteer.nascimento or '-' }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <span class="block text-slate-400 font-semibold mb-1">Número de Matrícula</span>
+                <span class="font-bold text-slate-800">{{ volunteer.matricula or '-' }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <span class="block text-slate-400 font-semibold mb-1">Doador (Sangue / Órgãos)</span>
+                <span class="font-bold text-slate-800">Sangue: {{ volunteer.doador_sangue }} | Órgãos: {{ volunteer.doador_orgaos }}</span>
+            </div>
+            <div class="md:col-span-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <span class="block text-slate-400 font-semibold mb-1">Endereço de Residência</span>
+                <span class="font-bold text-slate-800">
+                    {{ volunteer.rua }}, nº {{ volunteer.numero }} {% if volunteer.complemento %}- {{ volunteer.complemento }}{% endif %}
+                    {% if volunteer.referencia %} (Ref: {{ volunteer.referencia }}){% endif %}
+                    — Bairro: {{ volunteer.bairro }} / {{ volunteer.municipio }} (CEP: {{ volunteer.cep }})
+                </span>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-200 flex justify-between items-center text-[11px] text-slate-500">
+            <span>Certificado oficial de voluntariado (Lei nº 9.608/1998)</span>
+            <a href="{{ url_for('view_card', codigo=volunteer.codigo) }}" target="_blank" class="bg-emerald-700 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-emerald-600">
+                <i class="fas fa-id-card mr-1"></i> Ver Carteirinha
+            </a>
+        </div>
+    </div>
+    {% elif query_code %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center text-amber-900">
+        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+        <p class="font-bold">Nenhum voluntário encontrado para o código "{{ query_code }}".</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
