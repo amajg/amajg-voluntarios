@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Validação de Voluntário - AMAJG{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 my-8">
+    <div class="bg-emerald-800 text-white py-4 px-6 text-center">
+        <h2 class="text-lg font-bold">Validação de Carteirinha AMAJG</h2>
+        <p class="text-xs text-emerald-200">Sistema Oficial de Verificação</p>
+    </div>
+    
+    <div class="p-6">
+        {% if volunteer %}
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-4">
+                    <img src="{{ url_for('static', filename='uploads/' + volunteer.photo) if volunteer.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-16 h-20 object-cover rounded-lg border border-emerald-700">
+                    <div>
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full mb-1">
+                            <i class="fas fa-check-circle mr-1"></i> STATUS: {{ volunteer.status }}
+                        </span>
+                        <h3 class="text-base font-bold text-slate-900">{{ volunteer.full_name }}</h3>
+                        <p class="text-xs text-slate-500 font-mono">Cód: {{ volunteer.codigo }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <dl class="space-y-3 text-sm">
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">CPF:</dt>
+                    <dd class="font-medium text-slate-800">{{ volunteer.cpf }}</dd>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">Data de Nascimento:</dt>
+                    <dd class="font-medium text-slate-800">{{ volunteer.nascimento }}</dd>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">Matrícula:</dt>
+                    <dd class="font-medium text-slate-800">{{ volunteer.matricula }}</dd>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">Instituição:</dt>
+                    <dd class="font-medium text-slate-800 text-right">{{ volunteer.institution }}</dd>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">Curso / Período:</dt>
+                    <dd class="font-medium text-slate-800">{{ volunteer.curso }} • {{ volunteer.periodo }}</dd>
+                </div>
+                <div class="flex justify-between border-b pb-2">
+                    <dt class="text-slate-500">Emissão:</dt>
+                    <dd class="font-medium text-slate-800">{{ volunteer.data_cadastro }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500">Validade:</dt>
+                    <dd class="font-bold text-emerald-700">{{ volunteer.validade }}</dd>
+                </div>
+            </dl>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                <p class="text-[11px] text-slate-400">Assinado digitalmente por <strong>José Luiz Mendes Rocha Campos</strong> — Presidente da AMAJG</p>
+            </div>
+        {% else %}
+            <div class="text-center py-6">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-3xl mb-3"></i>
+                <h3 class="text-base font-bold text-slate-800">Voluntário não encontrado</h3>
+                <p class="text-xs text-slate-500 mt-1">O código informado não corresponde a nenhum registro ativo na base da AMAJG.</p>
+            </div>
+        {% endif %}
+
+        <div class="mt-6">
+            <a href="{{ url_for('public_query') }}" class="block w-full text-center bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-sm hover:bg-slate-300 transition">
+                Consultar Outro Código
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
