@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'amajg_secret_key_production_db'
+app.secret_key = 'amajg_secret_key_production_db_v2'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -18,16 +18,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
-# Credenciais e perfis de acesso
 ADMIN_PRINCIPAL = 'cadastro.amajg@gmail.com'
 DIRETORIA_USERS = {'cecilia', 'douglas', 'adrielle', 'mendes'}
 SENHA_DIRETORIA = 'diretoria2026'
 SENHA_ADMIN_PRINCIPAL = 'AMAJG2026*'
 
-# Modelo do Banco de Dados
 class Volunteer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    codigo = db.Column(db.String(20), unique=True, nullable=False)
+    codigo = db.Column(db.String(30), unique=True, nullable=False)
     nome = db.Column(db.String(120), nullable=False)
     cpf = db.Column(db.String(30), nullable=True)
     nascimento = db.Column(db.String(30), nullable=True)
@@ -35,6 +33,8 @@ class Volunteer(db.Model):
     instituicao = db.Column(db.String(150), nullable=False)
     curso = db.Column(db.String(150), nullable=True)
     periodo = db.Column(db.String(50), nullable=True)
+    whatsapp = db.Column(db.String(30), nullable=True)
+    email_voluntario = db.Column(db.String(120), nullable=True)
     photo = db.Column(db.String(200), default='default_user.png')
     data_cadastro = db.Column(db.String(50), nullable=True)
     validade = db.Column(db.String(50), nullable=True)
@@ -46,6 +46,10 @@ with app.app_context():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def gerar_codigo_sequencial():
+    count = Volunteer.query.count() + 1
+    return f"AMAJG-{count:05d}"
 
 @app.route('/')
 def index():
@@ -67,9 +71,6 @@ def login():
         elif identifier in DIRETORIA_USERS and password == SENHA_DIRETORIA:
             is_valid = True
             session['is_main_admin'] = False
-        elif identifier in ADMIN_PRINCIPAL and (password == SENHA_ADMIN_PRINCIPAL or password == temp_pass):
-            is_valid = True
-            session['is_main_admin'] = True
 
         if is_valid:
             session['admin_logged'] = True
@@ -108,7 +109,6 @@ def admin_dashboard():
         nome = request.form.get('nome')
         cpf = request.form.get('cpf', '')
         raw_nasc = request.form.get('nascimento', '')
-        # Formatar data de AAAA-MM-DD para DD/MM/AAAA se vier do input date
         nascimento = raw_nasc
         if '-' in raw_nasc:
             try:
@@ -121,22 +121,24 @@ def admin_dashboard():
         instituicao = request.form.get('instituicao')
         curso = request.form.get('curso', '')
         periodo = request.form.get('periodo', '')
+        whatsapp = request.form.get('whatsapp', '')
+        email_voluntario = request.form.get('email_voluntario', '')
         
-        codigo_unico = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        codigo_sequencial = gerar_codigo_sequencial()
         
         photo_filename = 'default_user.png'
         if 'photo' in request.files:
             file = request.files['photo']
             if file and file.filename != '' and allowed_file(file.filename):
                 ext = file.filename.rsplit('.', 1)[1].lower()
-                photo_filename = f"vol_{codigo_unico}.{ext}"
+                photo_filename = f"vol_{codigo_sequencial.replace('-', '')}.{ext}"
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
         
         now = datetime.now()
         validade_dt = now + timedelta(days=365)
         
         new_v = Volunteer(
-            codigo=codigo_unico,
+            codigo=codigo_sequencial,
             nome=nome,
             cpf=cpf,
             nascimento=nascimento,
@@ -144,15 +146,17 @@ def admin_dashboard():
             instituicao=instituicao,
             curso=curso,
             periodo=periodo,
+            whatsapp=whatsapp,
+            email_voluntario=email_voluntario,
             photo=photo_filename,
-            data_cadastro=now.strftime('%d/%m/%Y'),
+            data_cadastro=now.strftime('%d/%m/%Y às %H:%M'),
             validade=validade_dt.strftime('%d/%m/%Y'),
             status='Ativo',
             cadastrado_por=session.get('admin_user', 'gestor')
         )
         db.session.add(new_v)
         db.session.commit()
-        flash(f'Voluntário cadastrado com sucesso! Código: {codigo_unico}', 'success')
+        flash(f'Voluntário cadastrado com sucesso! Código: {codigo_sequencial}', 'success')
         return redirect(url_for('admin_dashboard'))
 
     volunteers_list = Volunteer.query.order_by(Volunteer.id.desc()).all()
@@ -165,7 +169,6 @@ def delete_volunteer(vol_id):
         return redirect(url_for('admin_dashboard'))
     vol = Volunteer.query.get_or_404(vol_id)
     db.session.delete(vol)
-    db.session.commit('Excluído')
     db.session.commit()
     flash('Cadastro excluído com sucesso.', 'info')
     return redirect(url_for('admin_dashboard'))
@@ -186,7 +189,6 @@ def public_query():
 def view_card(codigo):
     vol = Volunteer.query.filter_by(codigo=codigo.upper()).first()
     if not vol:
-        # Fallback de demonstração caso código inválido direto na URL
         vol = Volunteer(
             codigo=codigo,
             nome='VOLUNTÁRIO DEMONSTRAÇÃO',
