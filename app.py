@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'amajg_secret_key_production_db_v2'
+app.secret_key = 'amajg_secret_key_production_db_v3'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -161,6 +161,57 @@ def admin_dashboard():
 
     volunteers_list = Volunteer.query.order_by(Volunteer.id.desc()).all()
     return render_template('admin.html', voluntariados=volunteers_list, is_main_admin=session.get('is_main_admin', False))
+
+@app.route('/admin/edit/<int:vol_id>', methods=['GET', 'POST'])
+def edit_volunteer(vol_id):
+    if not session.get('admin_logged') or not session.get('is_main_admin'):
+        flash('Apenas o administrador principal (cadastro.amajg@gmail.com) pode editar cadastros.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
+    vol = Volunteer.query.get_or_404(vol_id)
+    if request.method == 'POST':
+        vol.nome = request.form.get('nome')
+        vol.cpf = request.form.get('cpf', '')
+        raw_nasc = request.form.get('nascimento', '')
+        if '-' in raw_nasc:
+            try:
+                dt_obj = datetime.strptime(raw_nasc, '%Y-%m-%d')
+                vol.nascimento = dt_obj.strftime('%d/%m/%Y')
+            except:
+                pass
+        else:
+            if raw_nasc:
+                vol.nascimento = raw_nasc
+        vol.matricula = request.form.get('matricula', '')
+        vol.instituicao = request.form.get('instituicao')
+        vol.curso = request.form.get('curso', '')
+        vol.periodo = request.form.get('periodo', '')
+        vol.whatsapp = request.form.get('whatsapp', '')
+        vol.email_voluntario = request.form.get('email_voluntario', '')
+        vol.validade = request.form.get('validade', vol.validade)
+        
+        if 'photo' in request.files:
+            file = request.files['photo']
+            if file and file.filename != '' and allowed_file(file.filename):
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                photo_filename = f"vol_{vol.codigo.replace('-', '')}.{ext}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+                vol.photo = photo_filename
+                
+        db.session.commit()
+        flash('Cadastro atualizado com sucesso!', 'success')
+        return redirect(url_for('admin_dashboard'))
+
+    # Converter data DD/MM/YYYY para YYYY-MM-DD para pré-preencher input date se houver
+    nasc_input = vol.nascimento
+    if vol.nascimento and '/' in vol.nascimento:
+        try:
+            dt_obj = datetime.strptime(vol.nascimento, '%d/%m/%Y')
+            nasc_input = dt_obj.strftime('%Y-%m-%d')
+        except:
+            nasc_input = ''
+
+    return render_template('edit_volunteer.html', vol=vol, nasc_input=nasc_input)
 
 @app.route('/admin/delete/<int:vol_id>', methods=['POST'])
 def delete_volunteer(vol_id):
