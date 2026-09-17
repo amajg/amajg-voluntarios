@@ -1,7 +1,7 @@
 import os
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.utils import secure_filename
 
@@ -13,14 +13,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
-# Múltiplos administradores permitidos (E-mail: Senha)
 admins_db = {
     'cadastro.amajg@gmail.com': 'AMAJG2026*',
-    'secretaria': 'secretaria2026',
-    'diretoria': 'diretoria2026'
+    'diretoria@amajg.org.br': 'diretoria2026',
+    'secretaria@amajg.org.br': 'secretaria2026'
 }
 
-# Armazenamento em memória (reinicia se o gunicorn reiniciar, ideal SQLite para persistência real)
 volunteers_db = []
 
 def allowed_file(filename):
@@ -71,13 +69,15 @@ def admin_dashboard():
     
     if request.method == 'POST':
         nome = request.form.get('nome')
+        cpf = request.form.get('cpf', '')
+        nascimento = request.form.get('nascimento', '')
+        matricula = request.form.get('matricula', '')
         instituicao = request.form.get('instituicao')
         curso = request.form.get('curso', '')
         periodo = request.form.get('periodo', '')
         
         codigo_unico = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         
-        # Tratamento da Foto
         photo_filename = 'default_user.png'
         if 'photo' in request.files:
             file = request.files['photo']
@@ -86,24 +86,37 @@ def admin_dashboard():
                 photo_filename = f"vol_{codigo_unico}.{ext}"
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
         
+        now = datetime.now()
+        validade_dt = now + timedelta(days=365)
+        
         volunteers_db.append({
             'code': codigo_unico,
             'codigo': codigo_unico,
             'full_name': nome,
             'nome': nome,
+            'cpf': cpf,
+            'nascimento': nascimento,
+            'matricula': matricula,
             'institution': instituicao,
             'instituicao': instituicao,
             'curso': curso,
             'period': periodo,
             'periodo': periodo,
             'photo': photo_filename,
-            'data_cadastro': datetime.now().strftime('%d/%m/%Y às %H:%M'),
+            'data_cadastro': now.strftime('%d/%m/%Y'),
+            'validade': validade_dt.strftime('%d/%m/%Y'),
+            'status': 'Ativo',
             'cadastrado_por': session.get('admin_email', 'sistema')
         })
         flash(f'Voluntário cadastrado com sucesso! Código: {codigo_unico}', 'success')
         return redirect(url_for('admin_dashboard'))
 
     return render_template('admin.html', voluntariados=volunteers_db, admins_count=len(admins_db))
+
+@app.route('/verify/<codigo>')
+def verify_volunteer(codigo):
+    vol = next((v for v in volunteers_db if v['codigo'] == codigo.upper()), None)
+    return render_template('verify.html', volunteer=vol, query_code=codigo)
 
 @app.route('/public-query', methods=['GET', 'POST'])
 def public_query():
@@ -113,27 +126,31 @@ def public_query():
         query_code = request.form.get('code', '').strip().upper()
     
     if query_code:
-        found_vol = next((v for v in volunteers_db if v['codigo'] == query_code), None)
+        return redirect(url_for('verify_volunteer', codigo=query_code))
         
     return render_template('public_query.html', volunteer=found_vol, query_code=query_code)
 
 @app.route('/card/<codigo>')
 def view_card(codigo):
-    vol = next((v for v in volunteers_db if v['codigo'] == codigo), None)
+    vol = next((v for v in volunteers_db if v['codigo'] == codigo.upper()), None)
     if not vol:
         vol = {
             'code': codigo,
             'codigo': codigo,
             'full_name': 'VOLUNTÁRIO DEMONSTRAÇÃO',
             'nome': 'VOLUNTÁRIO DEMONSTRAÇÃO',
+            'cpf': '000.000.000-00',
+            'nascimento': '01/01/2000',
+            'matricula': '2026001',
             'institution': 'UNIVERSIDADE FEDERAL',
             'instituicao': 'UNIVERSIDADE FEDERAL',
             'curso': 'PEDAGOGIA',
             'period': '3º Período',
             'periodo': '3º Período',
             'photo': 'default_user.png',
-            'data_cadastro': '01/01/2026',
-            'cadastrado_por': 'sistema'
+            'data_cadastro': datetime.now().strftime('%d/%m/%Y'),
+            'validade': (datetime.now() + timedelta(days=365)).strftime('%d/%m/%Y'),
+            'status': 'Ativo'
         }
     return render_template('card.html', v=vol)
 
