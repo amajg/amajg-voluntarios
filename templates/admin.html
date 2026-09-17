@@ -2,7 +2,7 @@
 {% block title %}Painel Administrativo - AMAJG{% endblock %}
 {% block content %}
 <div class="space-y-8">
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+ <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
         <div class="bg-emerald-800 text-white py-4 px-6 flex justify-between items-center">
             <div>
                 <h2 class="text-xl font-bold">Gerenciamento de Voluntários</h2>
@@ -12,276 +12,282 @@
                 Logado como: {{ session.get('admin_user') }} {% if is_main_admin %}(Admin Principal){% endif %}
             </span>
         </div>
-        <div class="p-6 md:p-8">
-            <p class="text-sm text-slate-600 mb-4">Preencha o CEP para preenchimento automático do endereço, defina perfil, doador de sangue/órgãos e contatos.</p>
-            <a href="{{ url_for('public_query') }}" class="inline-block bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm hover:bg-slate-300 transition">
-                <i class="fas fa-search mr-1"></i> Ir para Consulta Pública
-            </a>
-        </div>
-    </div>
-
-    <!-- Formulário de Cadastro (mantido igual) -->
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
-        <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center">
-            <i class="fas fa-user-plus mr-2 text-emerald-700"></i> Cadastrar Novo Voluntário Estudantil
-        </h3>
-        <form action="{{ url_for('admin_dashboard') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-            
-            <div class="border-b pb-4">
-                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">1. Dados Pessoais</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
-                        <input type="text" name="nome" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">CPF</label>
-                        <input type="text" name="cpf" placeholder="000.000.000-00" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Data de Nascimento (1936+)</label>
-                        <input type="date" name="nascimento" min="1936-01-01" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
-                        <select name="sexo" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
-                            <option value="Masculino">Masculino</option>
-                            <option value="Feminino">Feminino</option>
-                            <option value="Prefiro não informar">Prefiro não informar</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Estado Civil</label>
-                        <select name="estado_civil" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
-                            <option value="Solteiro(a)">Solteiro(a)</option>
-                            <option value="Casado(a)">Casado(a)</option>
-                            <option value="Divorciado(a)">Divorciado(a)</option>
-                            <option value="Viúvo(a)">Viúvo(a)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Profissão</label>
-                        <input type="text" name="profissao" placeholder="Ex: Estudante / Auxiliar" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
-                    <div>
-                        <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de sangue?</span>
-                        <div class="flex items-center space-x-6 text-sm">
-                            <label class="flex items-center"><input type="radio" name="doador_sangue" value="Sim" class="mr-2 text-emerald-700"> Sim</label>
-                            <label class="flex items-center"><input type="radio" name="doador_sangue" value="Não" checked class="mr-2 text-emerald-700"> Não</label>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de órgãos?</span>
-                        <div class="flex items-center space-x-6 text-sm">
-                            <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Sim" class="mr-2 text-emerald-700"> Sim</label>
-                            <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Não" checked class="mr-2 text-emerald-700"> Não</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-b pb-4">
-                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">2. Endereço Completo (Preenchimento autom. por CEP)</h4>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">CEP</label>
-                        <input type="text" id="cep-input" name="cep" placeholder="00000-000" maxlength="9" onblur="buscarCEP()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Rua / Logradouro</label>
-                        <input type="text" id="rua-input" name="rua" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Número</label>
-                        <input type="text" name="numero" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Complemento</label>
-                        <input type="text" name="complemento" placeholder="Apto, Bloco..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div class="md:col-span-3">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Ponto de Referência</label>
-                        <input type="text" name="referencia" placeholder="Próximo à praça..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Bairro</label>
-                        <input type="text" id="bairro-input" name="bairro" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Município</label>
-                        <input type="text" id="municipio-input" name="municipio" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-b pb-4">
-                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">3. Dados Acadêmicos & Contato</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Número de Matrícula</label>
-                        <input type="text" name="matricula" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Instituição de Ensino</label>
-                        <input type="text" name="instituicao" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Curso</label>
-                        <input type="text" name="curso" placeholder="Ex: Direito" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Período / Série</label>
-                        <input type="text" name="periodo" placeholder="Ex: 5º Período" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">WhatsApp (com DDD)</label>
-                        <input type="text" name="whatsapp" placeholder="Ex: 5521999999999" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">E-mail do Voluntário</label>
-                        <input type="email" name="email_voluntario" placeholder="voluntario@email.com" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    </div>
-                    <div class="md:col-span-3">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Foto do Voluntário</label>
-                        <input type="file" name="photo" accept="image/*" class="w-full text-sm text-slate-500 pt-1">
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-2">
-                <button type="submit" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-lg text-sm transition shadow w-full md:w-auto">
-                    <i class="fas fa-id-card mr-2"></i> Gerar Carteirinha e Salvar na Nuvem
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Tabela de Voluntários com Campo de Busca por NOME, CPF ou Código da Carteirinha -->
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h3 class="text-lg font-bold text-emerald-900 flex items-center">
-                <i class="fas fa-users mr-2 text-emerald-700"></i> Voluntários Cadastrados na Nuvem
-            </h3>
-            <!-- Campo de Busca -->
-            <form method="GET" action="{{ url_for('admin_dashboard') }}" class="flex items-center space-x-2">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar por Nome, CPF ou Código..." class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs w-64 focus:ring-2 focus:ring-emerald-600 focus:outline-none">
-                <button type="submit" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-600">
-                    <i class="fas fa-search"></i> Buscar
-                </button>
-                {% if search_query %}
-                <a href="{{ url_for('admin_dashboard') }}" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-300">
-                    <i class="fas fa-times"></i> Limpar
+        <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <p class="text-sm text-slate-600 mb-2">Preencha o CEP para preenchimento automático do endereço, defina perfil, doador de sangue/órgãos e contatos.</p>
+                <a href="{{ url_for('public_query') }}" class="inline-block bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm hover:bg-slate-300 transition">
+                    <i class="fas fa-search mr-1"></i> Ir para Consulta Pública
                 </a>
-                {% endif %}
-            </form>
-        </div>
-
-        {% if voluntariados %}
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
-                            <th class="py-3 px-3 font-semibold">Código</th>
-                            <th class="py-3 px-3 font-semibold">Nome / CPF / Mat.</th>
-                            <th class="py-3 px-3 font-semibold">Instituição / Curso</th>
-                            <th class="py-3 px-3 font-semibold">Status</th>
-                            <th class="py-3 px-3 font-semibold">Validade</th>
-                            <th class="py-3 px-3 font-semibold">Cadastro / Resp.</th>
-                            <th class="py-3 px-3 font-semibold text-center">Contato</th>
-                            <th class="py-3 px-3 font-semibold text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-xs">
-                        {% for v in voluntariados %}
-                        <tr class="hover:bg-slate-50">
-                            <td class="py-3 px-3 font-mono text-emerald-800 font-bold">{{ v.codigo }}</td>
-                            <td class="py-3 px-3 font-medium text-slate-800">
-                                {{ v.nome }}<br>
-                                <span class="text-[11px] text-slate-500">CPF: {{ v.cpf or '-' }} | Mat: {{ v.matricula }}</span>
-                            </td>
-                            <td class="py-3 px-3 text-slate-600">{{ v.instituicao }}<br><span class="text-[11px] text-slate-500">{{ v.curso }} ({{ v.periodo }})</span></td>
-                            <td class="py-3 px-3">
-                                {% if v.status == 'Ativo' %}
-                                    <span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">Ativo</span>
-                                {% else %}
-                                    <span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px]">Inativo</span>
-                                {% endif %}
-                                {% if is_main_admin %}
-                                <form action="{{ url_for('toggle_status', vol_id=v.id) }}" method="POST" class="mt-1">
-                                    <button type="submit" class="text-[10px] text-slate-500 underline hover:text-emerald-700">Alternar Status</button>
-                                </form>
-                                {% endif %}
-                            </td>
-                            <td class="py-3 px-3 text-emerald-700 font-semibold">{{ v.validade }}</td>
-                            <td class="py-3 px-3 text-slate-500">
-                                <div>{{ v.data_cadastro }}</div>
-                                <div class="text-[10px] italic text-slate-400">por: {{ v.cadastrado_por }}</div>
-                            </td>
-                            <td class="py-3 px-3 text-center space-x-1">
-                                {% if v.whatsapp %}
-                                <a href="https://wa.me/{{ v.whatsapp | replace('+', '') | replace(' ', '') | replace('-', '') }}" target="_blank" class="bg-green-600 text-white hover:bg-green-700 px-2.5 py-1 rounded inline-block font-semibold">
-                                    <i class="fab fa-whatsapp"></i> Zap
-                                </a>
-                                {% endif %}
-                                {% if v.email_voluntario %}
-                                <a href="mailto:{{ v.email_voluntario }}" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded inline-block font-semibold">
-                                    <i class="fas fa-envelope"></i> E-mail
-                                </a>
-                                {% endif %}
-                            </td>
-                            <td class="py-3 px-3 text-center space-x-1">
-                                <a href="{{ url_for('view_card', codigo=v.codigo) }}" target="_blank" class="bg-emerald-700 text-white hover:bg-emerald-600 px-2.5 py-1 rounded inline-block">
-                                    <i class="fas fa-print mr-1"></i> Imprimir
-                                </a>
-                                {% if is_main_admin %}
-                                <a href="{{ url_for('edit_volunteer', vol_id=v.id) }}" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded inline-block">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ url_for('delete_volunteer', vol_id=v.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja realmente excluir este cadastro?');">
-                                    <button type="submit" class="bg-red-600 text-white hover:bg-red-700 px-2.5 py-1 rounded">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
-        {% else %}
-            <p class="text-sm text-slate-500 italic">Nenhum voluntário encontrado com o critério informado.</p>
-        {% endif %}
+            <div>
+                <a href="{{ url_for('export_backup_json') }}" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-lg text-sm transition shadow inline-flex items-center">
+                    <i class="fas fa-file-download mr-2"></i> Baixar Backup JSON (Dados + Fotos)
+                </a>
+            </div>
+        </div>
     </div>
+    <!-- Formulário de Cadastro (mantido igual) -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
+        <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center">
+            <i class="fas fa-user-plus mr-2 text-emerald-700"></i> Cadastrar Novo Voluntário Estudantil
+        </h3>
+        <form action="{{ url_for('admin_dashboard') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            
+            <div class="border-b pb-4">
+                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">1. Dados Pessoais</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
+                        <input type="text" name="nome" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">CPF</label>
+                        <input type="text" name="cpf" placeholder="000.000.000-00" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Data de Nascimento (1936+)</label>
+                        <input type="date" name="nascimento" min="1936-01-01" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
+                        <select name="sexo" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                            <option value="Prefiro não informar">Prefiro não informar</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Estado Civil</label>
+                        <select name="estado_civil" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
+                            <option value="Solteiro(a)">Solteiro(a)</option>
+                            <option value="Casado(a)">Casado(a)</option>
+                            <option value="Divorciado(a)">Divorciado(a)</option>
+                            <option value="Viúvo(a)">Viúvo(a)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Profissão</label>
+                        <input type="text" name="profissao" placeholder="Ex: Estudante / Auxiliar" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
+                    <div>
+                        <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de sangue?</span>
+                        <div class="flex items-center space-x-6 text-sm">
+                            <label class="flex items-center"><input type="radio" name="doador_sangue" value="Sim" class="mr-2 text-emerald-700"> Sim</label>
+                            <label class="flex items-center"><input type="radio" name="doador_sangue" value="Não" checked class="mr-2 text-emerald-700"> Não</label>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de órgãos?</span>
+                        <div class="flex items-center space-x-6 text-sm">
+                            <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Sim" class="mr-2 text-emerald-700"> Sim</label>
+                            <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Não" checked class="mr-2 text-emerald-700"> Não</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b pb-4">
+                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">2. Endereço Completo (Preenchimento autom. por CEP)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">CEP</label>
+                        <input type="text" id="cep-input" name="cep" placeholder="00000-000" maxlength="9" onblur="buscarCEP()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Rua / Logradouro</label>
+                        <input type="text" id="rua-input" name="rua" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Número</label>
+                        <input type="text" name="numero" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Complemento</label>
+                        <input type="text" name="complemento" placeholder="Apto, Bloco..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Ponto de Referência</label>
+                        <input type="text" name="referencia" placeholder="Próximo à praça..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Bairro</label>
+                        <input type="text" id="bairro-input" name="bairro" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Município</label>
+                        <input type="text" id="municipio-input" name="municipio" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b pb-4">
+                <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-3">3. Dados Acadêmicos & Contato</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Número de Matrícula</label>
+                        <input type="text" name="matricula" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Instituição de Ensino</label>
+                        <input type="text" name="instituicao" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Curso</label>
+                        <input type="text" name="curso" placeholder="Ex: Direito" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Período / Série</label>
+                        <input type="text" name="periodo" placeholder="Ex: 5º Período" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">WhatsApp (com DDD)</label>
+                        <input type="text" name="whatsapp" placeholder="Ex: 5521999999999" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">E-mail do Voluntário</label>
+                        <input type="email" name="email_voluntario" placeholder="voluntario@email.com" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Foto do Voluntário</label>
+                        <input type="file" name="photo" accept="image/*" class="w-full text-sm text-slate-500 pt-1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-lg text-sm transition shadow w-full md:w-auto">
+                    <i class="fas fa-id-card mr-2"></i> Gerar Carteirinha e Salvar na Nuvem
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela de Voluntários com Campo de Busca por NOME, CPF ou Código da Carteirinha -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h3 class="text-lg font-bold text-emerald-900 flex items-center">
+                <i class="fas fa-users mr-2 text-emerald-700"></i> Voluntários Cadastrados na Nuvem
+            </h3>
+            <!-- Campo de Busca -->
+            <form method="GET" action="{{ url_for('admin_dashboard') }}" class="flex items-center space-x-2">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar por Nome, CPF ou Código..." class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs w-64 focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                <button type="submit" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-600">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+                {% if search_query %}
+                <a href="{{ url_for('admin_dashboard') }}" class="bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-300">
+                    <i class="fas fa-times"></i> Limpar
+                </a>
+                {% endif %}
+            </form>
+        </div>
+
+        {% if voluntariados %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-xs">
+                            <th class="py-3 px-3 font-semibold">Código</th>
+                            <th class="py-3 px-3 font-semibold">Nome / CPF / Mat.</th>
+                            <th class="py-3 px-3 font-semibold">Instituição / Curso</th>
+                            <th class="py-3 px-3 font-semibold">Status</th>
+                            <th class="py-3 px-3 font-semibold">Validade</th>
+                            <th class="py-3 px-3 font-semibold">Cadastro / Resp.</th>
+                            <th class="py-3 px-3 font-semibold text-center">Contato</th>
+                            <th class="py-3 px-3 font-semibold text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-xs">
+                        {% for v in voluntariados %}
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-3 font-mono text-emerald-800 font-bold">{{ v.codigo }}</td>
+                            <td class="py-3 px-3 font-medium text-slate-800">
+                                {{ v.nome }}<br>
+                                <span class="text-[11px] text-slate-500">CPF: {{ v.cpf or '-' }} | Mat: {{ v.matricula }}</span>
+                            </td>
+                            <td class="py-3 px-3 text-slate-600">{{ v.instituicao }}<br><span class="text-[11px] text-slate-500">{{ v.curso }} ({{ v.periodo }})</span></td>
+                            <td class="py-3 px-3">
+                                {% if v.status == 'Ativo' %}
+                                    <span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">Ativo</span>
+                                {% else %}
+                                    <span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px]">Inativo</span>
+                                {% endif %}
+                                {% if is_main_admin %}
+                                <form action="{{ url_for('toggle_status', vol_id=v.id) }}" method="POST" class="mt-1">
+                                    <button type="submit" class="text-[10px] text-slate-500 underline hover:text-emerald-700">Alternar Status</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-3 text-emerald-700 font-semibold">{{ v.validade }}</td>
+                            <td class="py-3 px-3 text-slate-500">
+                                <div>{{ v.data_cadastro }}</div>
+                                <div class="text-[10px] italic text-slate-400">por: {{ v.cadastrado_por }}</div>
+                            </td>
+                            <td class="py-3 px-3 text-center space-x-1">
+                                {% if v.whatsapp %}
+                                <a href="https://wa.me/{{ v.whatsapp | replace('+', '') | replace(' ', '') | replace('-', '') }}" target="_blank" class="bg-green-600 text-white hover:bg-green-700 px-2.5 py-1 rounded inline-block font-semibold">
+                                    <i class="fab fa-whatsapp"></i> Zap
+                                </a>
+                                {% endif %}
+                                {% if v.email_voluntario %}
+                                <a href="mailto:{{ v.email_voluntario }}" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded inline-block font-semibold">
+                                    <i class="fas fa-envelope"></i> E-mail
+                                </a>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-3 text-center space-x-1">
+                                <a href="{{ url_for('view_card', codigo=v.codigo) }}" target="_blank" class="bg-emerald-700 text-white hover:bg-emerald-600 px-2.5 py-1 rounded inline-block">
+                                    <i class="fas fa-print mr-1"></i> Imprimir
+                                </a>
+                                {% if is_main_admin %}
+                                <a href="{{ url_for('edit_volunteer', vol_id=v.id) }}" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded inline-block">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ url_for('delete_volunteer', vol_id=v.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja realmente excluir este cadastro?');">
+                                    <button type="submit" class="bg-red-600 text-white hover:bg-red-700 px-2.5 py-1 rounded">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500 italic">Nenhum voluntário encontrado com o critério informado.</p>
+        {% endif %}
+    </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const dateInput = document.querySelector('input[type="date"][name="nascimento"]');
-        if (dateInput) {
-            dateInput.min = "1936-01-01";
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.max = today;
-        }
-    });
+    document.addEventListener("DOMContentLoaded", function() {
+        const dateInput = document.querySelector('input[type="date"][name="nascimento"]');
+        if (dateInput) {
+            dateInput.min = "1936-01-01";
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.max = today;
+        }
+    });
 
-    function buscarCEP() {
-        const cepVal = document.getElementById('cep-input').value.replace(/\D/g, '');
-        if (cepVal.length === 8) {
-            fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.erro) {
-                        document.getElementById('rua-input').value = data.logradouro || '';
-                        document.getElementById('bairro-input').value = data.bairro || '';
-                        document.getElementById('municipio-input').value = data.localidade || '';
-                    }
-                })
-                .catch(err => console.error('Erro ao consultar CEP:', err));
-        }
-    }
+    function buscarCEP() {
+        const cepVal = document.getElementById('cep-input').value.replace(/\D/g, '');
+        if (cepVal.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('rua-input').value = data.logradouro || '';
+                        document.getElementById('bairro-input').value = data.bairro || '';
+                        document.getElementById('municipio-input').value = data.localidade || '';
+                    }
+                })
+                .catch(err => console.error('Erro ao consultar CEP:', err));
+        }
+    }
 </script>
 {% endblock %}
