@@ -12,7 +12,7 @@
     </div>
 
     <!-- Padrão 9x5cm harmônico e de alta legibilidade -->
-    <div class="printable-card bg-white border-2 border-emerald-800 rounded-xl p-2 flex flex-col justify-between w-[9cm] h-[5cm] shadow-xl box-border">
+    <div class="printable-card bg-white border-2 border-emerald-800 rounded-xl p-2 flex flex-col justify-between w-[9cm] h-[5cm] shadow-xl box-border overflow-hidden">
         <!-- Topo: Título em Caixa Alta e Negrito + Subtítulo em Caixa Alta sem negrito -->
         <div class="flex items-center justify-between border-b pb-0.5 border-emerald-300">
             <div class="flex items-center space-x-1.5">
@@ -31,25 +31,34 @@
             </span>
         </div>
 
-        <!-- Meio: Foto + Informações em Caixa Alta -->
-        <div class="flex items-center space-x-2 my-0.5">
-            <img src="{{ url_for('static', filename='uploads/' + v.photo) if v.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-10 h-13 object-cover rounded-lg border border-emerald-700 bg-slate-100 shadow-sm">
+        <!-- Meio: Foto Maior + Informações em Caixa Alta + QR Code com Texto -->
+        <div class="flex items-center justify-between space-x-1.5 my-0.5 flex-1">
+            <!-- Foto maior -->
+            <img src="{{ url_for('static', filename='uploads/' + v.photo) if v.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-13 h-16 object-cover rounded-lg border-2 border-emerald-700 bg-slate-100 shadow-sm shrink-0">
+            
+            <!-- Dados centrais -->
             <div class="flex-1 overflow-hidden leading-tight uppercase">
-                <p class="font-extrabold text-[8.5px] text-slate-900 truncate">{{ v.nome }}</p>
-                <p class="text-[6.5px] text-slate-700 font-bold">CPF: {{ v.cpf }}</p>
-                <p class="text-[6.5px] text-slate-700 font-bold">DATA DE NASCIMENTO: {{ v.nascimento }}</p>
-                <p class="text-[6.5px] text-slate-700 font-bold">MATRÍCULA: {{ v.matricula }}</p>
-                <p class="text-[6.5px] text-emerald-900 font-extrabold truncate">{{ v.instituicao }}</p>
-                <p class="text-[6.5px] text-slate-700 font-semibold truncate">CURSO: {{ v.curso }} | PERÍODO: {{ v.periodo }}</p>
-                <p class="text-[6.5px] text-emerald-800 font-extrabold">VALIDADE: {{ v.validade }}</p>
+                <p class="font-extrabold text-[8px] text-slate-900 truncate">{{ v.nome }}</p>
+                <p class="text-[6px] text-slate-700 font-bold">CPF: {{ v.cpf }}</p>
+                <p class="text-[6px] text-slate-700 font-bold">DATA DE NASCIMENTO: {{ v.nascimento }}</p>
+                <p class="text-[6px] text-slate-700 font-bold">MATRÍCULA: {{ v.matricula }}</p>
+                <p class="text-[6px] text-emerald-900 font-extrabold truncate">{{ v.instituicao }}</p>
+                <p class="text-[6px] text-slate-700 font-semibold truncate">CURSO: {{ v.curso }} | PERÍODO: {{ v.periodo }}</p>
+                <p class="text-[6px] text-emerald-800 font-extrabold">VALIDADE: {{ v.validade }}</p>
             </div>
-            <!-- QR Code apontando estritamente para o site oficial da consulta pública -->
-            <div id="qrcode-{{ v.codigo }}" class="bg-white p-0.5 rounded border border-slate-300 shadow-sm"></div>
+
+            <!-- QR Code + Texto explicativo abaixo -->
+            <div class="flex flex-col items-center shrink-0 w-[2.2cm]">
+                <div id="qrcode-{{ v.codigo }}" class="bg-white p-0.5 rounded border border-slate-300 shadow-sm flex items-center justify-center"></div>
+                <p class="text-[4.2px] text-slate-600 text-center leading-[5.2px] mt-0.5 font-medium">
+                    Consulte a veracidade das informações no site abaixo: amajg-voluntarios.onrender.com/public-query
+                </p>
+            </div>
         </div>
 
         <!-- Rodapé: Lei + Assinatura Cursiva do Presidente -->
         <div class="border-t pt-0.5 border-emerald-200 flex justify-between items-end text-[5.5px] text-slate-600">
-            <span class="font-medium">Lei nº 9.608/1998</span>
+            <span class="font-medium">Em conformidade com a Lei Federal nº 9.608/1998</span>
             <div class="text-right leading-tight">
                 <div style="font-family: 'Brush Script MT', 'Great Vibes', cursive, serif; font-size: 9.5px;" class="text-emerald-900 font-bold">
                     José Luiz Mendes Rocha Campos
@@ -65,12 +74,23 @@
     document.addEventListener("DOMContentLoaded", function() {
         const qrContainer = document.getElementById("qrcode-{{ v.codigo }}");
         if (qrContainer) {
-            new QRCode(qrContainer, {
-                text: "https://amajg-voluntarios.onrender.com/public-query",
-                width: 38,
-                height: 38,
-                colorDark: "#065f46",
-                colorLight: "#ffffff",
+            qrContainer.innerHTML = '';
+            try {
+                new QRCode(qrContainer, {
+                    text: "https://amajg-voluntarios.onrender.com/public-query",
+                    width: 36,
+                    height: 36,
+                    colorDark: "#065f46",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e) {
+                console.error("Erro QR code:", e);
+            }
+        }
+    });
+</script>
+{% endblock `}
                 correctLevel: QRCode.CorrectLevel.M
             });
         }
