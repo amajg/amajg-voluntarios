@@ -1,13 +1,30 @@
 import os
 import random
 import string
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'amajg_secret_key_production'
 
-# Armazenamento em memória simples para os voluntários (reinicia se o gunicorn reiniciar, ideal SQLite para persistência real)
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+
+# Múltiplos administradores permitidos (E-mail: Senha)
+admins_db = {
+    'cadastro.amajg@gmail.com': 'AMAJG2026*',
+    'secretaria': 'secretaria2026',
+    'diretoria': 'diretoria2026'
+}
+
+# Armazenamento em memória (reinicia se o gunicorn reiniciar, ideal SQLite para persistência real)
 volunteers_db = []
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -16,11 +33,10 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
-        # Aceita a senha padrão ou a última gerada em session se desejar
-        valid_pass = session.get('temp_password', 'AMAJG2026*')
-        if email == 'cadastro.amajg@gmail.com' and (password == 'AMAJG2026*' or password == valid_pass):
+        temp_pass = session.get('temp_password')
+        if email in admins_db and (password == admins_db[email] or password == temp_pass):
             session['admin_logged'] = True
             session['admin_email'] = email
             flash('Login realizado com sucesso!', 'success')
@@ -32,8 +48,8 @@ def login():
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form.get('email')
-        if email == 'cadastro.amajg@gmail.com':
+        email = request.form.get('email', '').strip().lower()
+        if email in admins_db:
             temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
             session['temp_password'] = temp_pass
             flash(f'Senha temporária gerada: {temp_pass}', 'info')
@@ -59,20 +75,35 @@ def admin_dashboard():
         curso = request.form.get('curso', '')
         periodo = request.form.get('periodo', '')
         
-        # Gera código único para o voluntário
         codigo_unico = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         
+        # Tratamento da Foto
+        photo_filename = 'default_user.png'
+        if 'photo' in request.files:
+            file = request.files['photo']
+            if file and file.filename != '' and allowed_file(file.filename):
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                photo_filename = f"vol_{codigo_unico}.{ext}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_filename))
+        
         volunteers_db.append({
+            'code': codigo_unico,
             'codigo': codigo_unico,
+            'full_name': nome,
             'nome': nome,
+            'institution': instituicao,
             'instituicao': instituicao,
             'curso': curso,
-            'periodo': periodo
+            'period': periodo,
+            'periodo': periodo,
+            'photo': photo_filename,
+            'data_cadastro': datetime.now().strftime('%d/%m/%Y às %H:%M'),
+            'cadastrado_por': session.get('admin_email', 'sistema')
         })
-        flash('Voluntário cadastrado com sucesso!', 'success')
+        flash(f'Voluntário cadastrado com sucesso! Código: {codigo_unico}', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('admin.html', voluntariados=volunteers_db)
+    return render_template('admin.html', voluntariados=volunteers_db, admins_count=len(admins_db))
 
 @app.route('/public-query', methods=['GET', 'POST'])
 def public_query():
@@ -91,11 +122,18 @@ def view_card(codigo):
     vol = next((v for v in volunteers_db if v['codigo'] == codigo), None)
     if not vol:
         vol = {
+            'code': codigo,
             'codigo': codigo,
+            'full_name': 'VOLUNTÁRIO DEMONSTRAÇÃO',
             'nome': 'VOLUNTÁRIO DEMONSTRAÇÃO',
+            'institution': 'UNIVERSIDADE FEDERAL',
             'instituicao': 'UNIVERSIDADE FEDERAL',
             'curso': 'PEDAGOGIA',
-            'periodo': '3º Período'
+            'period': '3º Período',
+            'periodo': '3º Período',
+            'photo': 'default_user.png',
+            'data_cadastro': '01/01/2026',
+            'cadastrado_por': 'sistema'
         }
     return render_template('card.html', v=vol)
 
