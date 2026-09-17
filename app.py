@@ -3,23 +3,46 @@ import random
 import string
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'amajg_secret_key_production'
+app.secret_key = 'amajg_secret_key_production_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
-admins_db = {
-    'cadastro.amajg@gmail.com': 'AMAJG2026*',
-    'diretoria@amajg.org.br': 'diretoria2026',
-    'secretaria@amajg.org.br': 'secretaria2026'
-}
+# Credenciais e perfis de acesso
+ADMIN_PRINCIPAL = 'cadastro.amajg@gmail.com'
+DIRETORIA_USERS = {'cecilia', 'douglas', 'adrielle', 'mendes'}
+SENHA_DIRETORIA = 'diretoria2026'
+SENHA_ADMIN_PRINCIPAL = 'AMAJG2026*'
 
-volunteers_db = []
+# Modelo do Banco de Dados
+class Volunteer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    codigo = db.Column(db.String(20), unique=True, nullable=False)
+    nome = db.Column(db.String(120), nullable=False)
+    cpf = db.Column(db.String(30), nullable=True)
+    nascimento = db.Column(db.String(30), nullable=True)
+    matricula = db.Column(db.String(50), nullable=True)
+    instituicao = db.Column(db.String(150), nullable=False)
+    curso = db.Column(db.String(150), nullable=True)
+    periodo = db.Column(db.String(50), nullable=True)
+    photo = db.Column(db.String(200), default='default_user.png')
+    data_cadastro = db.Column(db.String(50), nullable=True)
+    validade = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(30), default='Ativo')
+    cadastrado_por = db.Column(db.String(100), nullable=True)
+
+with app.app_context():
+    db.create_all()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -31,28 +54,42 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
+        identifier = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
         temp_pass = session.get('temp_password')
-        if email in admins_db and (password == admins_db[email] or password == temp_pass):
+        
+        is_valid = False
+        user_display = identifier
+        
+        if identifier == ADMIN_PRINCIPAL and (password == SENHA_ADMIN_PRINCIPAL or password == temp_pass):
+            is_valid = True
+            session['is_main_admin'] = True
+        elif identifier in DIRETORIA_USERS and password == SENHA_DIRETORIA:
+            is_valid = True
+            session['is_main_admin'] = False
+        elif identifier in ADMIN_PRINCIPAL and (password == SENHA_ADMIN_PRINCIPAL or password == temp_pass):
+            is_valid = True
+            session['is_main_admin'] = True
+
+        if is_valid:
             session['admin_logged'] = True
-            session['admin_email'] = email
+            session['admin_user'] = user_display
             flash('Login realizado com sucesso!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
-            flash('E-mail ou senha inválidos.', 'danger')
+            flash('Identificação ou senha inválidos.', 'danger')
     return render_template('login.html')
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        if email in admins_db:
+        identifier = request.form.get('email', '').strip().lower()
+        if identifier == ADMIN_PRINCIPAL or identifier in DIRETORIA_USERS:
             temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
             session['temp_password'] = temp_pass
-            flash(f'Senha temporária gerada: {temp_pass}', 'info')
+            flash(f'Senha temporária gerada para {identifier}: {temp_pass}', 'info')
         else:
-            flash('E-mail não encontrado.', 'danger')
+            flash('Usuário/E-mail não encontrado.', 'danger')
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
@@ -70,7 +107,16 @@ def admin_dashboard():
     if request.method == 'POST':
         nome = request.form.get('nome')
         cpf = request.form.get('cpf', '')
-        nascimento = request.form.get('nascimento', '')
+        raw_nasc = request.form.get('nascimento', '')
+        # Formatar data de AAAA-MM-DD para DD/MM/AAAA se vier do input date
+        nascimento = raw_nasc
+        if '-' in raw_nasc:
+            try:
+                dt_obj = datetime.strptime(raw_nasc, '%Y-%m-%d')
+                nascimento = dt_obj.strftime('%d/%m/%Y')
+            except:
+                pass
+                
         matricula = request.form.get('matricula', '')
         instituicao = request.form.get('instituicao')
         curso = request.form.get('curso', '')
@@ -89,69 +135,72 @@ def admin_dashboard():
         now = datetime.now()
         validade_dt = now + timedelta(days=365)
         
-        volunteers_db.append({
-            'code': codigo_unico,
-            'codigo': codigo_unico,
-            'full_name': nome,
-            'nome': nome,
-            'cpf': cpf,
-            'nascimento': nascimento,
-            'matricula': matricula,
-            'institution': instituicao,
-            'instituicao': instituicao,
-            'curso': curso,
-            'period': periodo,
-            'periodo': periodo,
-            'photo': photo_filename,
-            'data_cadastro': now.strftime('%d/%m/%Y'),
-            'validade': validade_dt.strftime('%d/%m/%Y'),
-            'status': 'Ativo',
-            'cadastrado_por': session.get('admin_email', 'sistema')
-        })
+        new_v = Volunteer(
+            codigo=codigo_unico,
+            nome=nome,
+            cpf=cpf,
+            nascimento=nascimento,
+            matricula=matricula,
+            instituicao=instituicao,
+            curso=curso,
+            periodo=periodo,
+            photo=photo_filename,
+            data_cadastro=now.strftime('%d/%m/%Y'),
+            validade=validade_dt.strftime('%d/%m/%Y'),
+            status='Ativo',
+            cadastrado_por=session.get('admin_user', 'gestor')
+        )
+        db.session.add(new_v)
+        db.session.commit()
         flash(f'Voluntário cadastrado com sucesso! Código: {codigo_unico}', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('admin.html', voluntariados=volunteers_db, admins_count=len(admins_db))
+    volunteers_list = Volunteer.query.order_by(Volunteer.id.desc()).all()
+    return render_template('admin.html', voluntariados=volunteers_list, is_main_admin=session.get('is_main_admin', False))
 
-@app.route('/verify/<codigo>')
-def verify_volunteer(codigo):
-    vol = next((v for v in volunteers_db if v['codigo'] == codigo.upper()), None)
-    return render_template('verify.html', volunteer=vol, query_code=codigo)
+@app.route('/admin/delete/<int:vol_id>', methods=['POST'])
+def delete_volunteer(vol_id):
+    if not session.get('admin_logged') or not session.get('is_main_admin'):
+        flash('Apenas o administrador principal (cadastro.amajg@gmail.com) pode excluir cadastros.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    vol = Volunteer.query.get_or_404(vol_id)
+    db.session.delete(vol)
+    db.session.commit('Excluído')
+    db.session.commit()
+    flash('Cadastro excluído com sucesso.', 'info')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/public-query', methods=['GET', 'POST'])
 def public_query():
-    query_code = request.args.get('code', '')
+    query_code = request.args.get('code', '').strip().upper()
     found_vol = None
     if request.method == 'POST':
         query_code = request.form.get('code', '').strip().upper()
     
     if query_code:
-        return redirect(url_for('verify_volunteer', codigo=query_code))
+        found_vol = Volunteer.query.filter_by(codigo=query_code).first()
         
     return render_template('public_query.html', volunteer=found_vol, query_code=query_code)
 
 @app.route('/card/<codigo>')
 def view_card(codigo):
-    vol = next((v for v in volunteers_db if v['codigo'] == codigo.upper()), None)
+    vol = Volunteer.query.filter_by(codigo=codigo.upper()).first()
     if not vol:
-        vol = {
-            'code': codigo,
-            'codigo': codigo,
-            'full_name': 'VOLUNTÁRIO DEMONSTRAÇÃO',
-            'nome': 'VOLUNTÁRIO DEMONSTRAÇÃO',
-            'cpf': '000.000.000-00',
-            'nascimento': '01/01/2000',
-            'matricula': '2026001',
-            'institution': 'UNIVERSIDADE FEDERAL',
-            'instituicao': 'UNIVERSIDADE FEDERAL',
-            'curso': 'PEDAGOGIA',
-            'period': '3º Período',
-            'periodo': '3º Período',
-            'photo': 'default_user.png',
-            'data_cadastro': datetime.now().strftime('%d/%m/%Y'),
-            'validade': (datetime.now() + timedelta(days=365)).strftime('%d/%m/%Y'),
-            'status': 'Ativo'
-        }
+        # Fallback de demonstração caso código inválido direto na URL
+        vol = Volunteer(
+            codigo=codigo,
+            nome='VOLUNTÁRIO DEMONSTRAÇÃO',
+            cpf='000.000.000-00',
+            nascimento='01/01/2000',
+            matricula='2026001',
+            instituicao='UNIVERSIDADE FEDERAL',
+            curso='PEDAGOGIA',
+            periodo='3º Período',
+            photo='default_user.png',
+            data_cadastro=datetime.now().strftime('%d/%m/%Y'),
+            validade=(datetime.now() + timedelta(days=365)).strftime('%d/%m/%Y'),
+            status='Ativo'
+        )
     return render_template('card.html', v=vol)
 
 if __name__ == '__main__':
