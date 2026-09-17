@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Editar Voluntário - AMAJG{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto my-8 bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-6 md:p-8">
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+        <div>
+            <h2 class="text-xl font-bold text-emerald-900">Editar Cadastro de Voluntário</h2>
+            <p class="text-xs text-slate-500 font-mono">Código: {{ vol.codigo }}</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="bg-slate-200 text-slate-700 hover:bg-slate-300 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <i class="fas fa-arrow-left mr-1"></i> Voltar
+        </a>
+    </div>
+
+    <form action="{{ url_for('edit_volunteer', vol_id=vol.id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Nome Completo</label>
+                <input type="text" name="nome" value="{{ vol.nome }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">CPF</label>
+                <input type="text" name="cpf" value="{{ vol.cpf or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Data de Nascimento</label>
+                <input type="date" name="nascimento" min="1936-01-01" value="{{ nasc_input }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Sexo</label>
+                <select name="sexo" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
+                    <option value="Masculino" {% if vol.sexo == 'Masculino' %}selected{% endif %}>Masculino</option>
+                    <option value="Feminino" {% if vol.sexo == 'Feminino' %}selected{% endif %}>Feminino</option>
+                    <option value="Prefiro não informar" {% if vol.sexo == 'Prefiro não informar' %}selected{% endif %}>Prefiro não informar</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Estado Civil</label>
+                <select name="estado_civil" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white">
+                    <option value="Solteiro(a)" {% if vol.estado_civil == 'Solteiro(a)' %}selected{% endif %}>Solteiro(a)</option>
+                    <option value="Casado(a)" {% if vol.estado_civil == 'Casado(a)' %}selected{% endif %}>Casado(a)</option>
+                    <option value="Divorciado(a)" {% if vol.estado_civil == 'Divorciado(a)' %}selected{% endif %}>Divorciado(a)</option>
+                    <option value="Viúvo(a)" {% if vol.estado_civil == 'Viúvo(a)' %}selected{% endif %}>Viúvo(a)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Profissão</label>
+                <input type="text" name="profissao" value="{{ vol.profissao or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
+            <div>
+                <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de sangue?</span>
+                <div class="flex items-center space-x-6 text-sm">
+                    <label class="flex items-center"><input type="radio" name="doador_sangue" value="Sim" {% if vol.doador_sangue == 'Sim' %}checked{% endif %} class="mr-2"> Sim</label>
+                    <label class="flex items-center"><input type="radio" name="doador_sangue" value="Não" {% if vol.doador_sangue != 'Sim' %}checked{% endif %} class="mr-2"> Não</label>
+                </div>
+            </div>
+            <div>
+                <span class="block text-sm font-medium text-slate-700 mb-1">É doador(a) de órgãos?</span>
+                <div class="flex items-center space-x-6 text-sm">
+                    <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Sim" {% if vol.doador_orgaos == 'Sim' %}checked{% endif %} class="mr-2"> Sim</label>
+                    <label class="flex items-center"><input type="radio" name="doador_orgaos" value="Não" {% if vol.doador_orgaos != 'Sim' %}checked{% endif %} class="mr-2"> Não</label>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide pt-2">Endereço (Auto-CEP)</h4>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">CEP</label>
+                <input type="text" id="cep-input-edit" name="cep" value="{{ vol.cep or '' }}" maxlength="9" onblur="buscarCEPEdit()" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Rua / Logradouro</label>
+                <input type="text" id="rua-input-edit" name="rua" value="{{ vol.rua or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Número</label>
+                <input type="text" name="numero" value="{{ vol.numero or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Complemento</label>
+                <input type="text" name="complemento" value="{{ vol.complemento or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div class="md:col-span-3">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Ponto de Referência</label>
+                <input type="text" name="referencia" value="{{ vol.referencia or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Bairro</label>
+                <input type="text" id="bairro-input-edit" name="bairro" value="{{ vol.bairro or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Município</label>
+                <input type="text" id="municipio-input-edit" name="municipio" value="{{ vol.municipio or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50">
+            </div>
+        </div>
+
+        <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide pt-2">Acadêmico & Contato</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Número de Matrícula</label>
+                <input type="text" name="matricula" value="{{ vol.matricula or '' }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Instituição de Ensino</label>
+                <input type="text" name="instituicao" value="{{ vol.instituicao }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Curso</label>
+                <input type="text" name="curso" value="{{ vol.curso or '' }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Período / Série</label>
+                <input type="text" name="periodo" value="{{ vol.periodo or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Validade</label>
+                <input type="text" name="validade" value="{{ vol.validade or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">WhatsApp (com DDD)</label>
+                <input type="text" name="whatsapp" value="{{ vol.whatsapp or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">E-mail do Voluntário</label>
+                <input type="email" name="email_voluntario" value="{{ vol.email_voluntario or '' }}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Alterar Foto (Opcional)</label>
+                <input type="file" name="photo" accept="image/*" class="w-full text-sm text-slate-500 pt-1">
+            </div>
+        </div>
+
+        <div class="pt-4">
+            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg text-sm transition shadow">
+                <i class="fas fa-save mr-2"></i> Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function buscarCEPEdit() {
+        const cepVal = document.getElementById('cep-input-edit').value.replace(/\D/g, '');
+        if (cepVal.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('rua-input-edit').value = data.logradouro || '';
+                        document.getElementById('bairro-input-edit').value = data.bairro || '';
+                        document.getElementById('municipio-input-edit').value = data.localidade || '';
+                    }
+                })
+                .catch(err => console.error('Erro CEP:', err));
+        }
+    }
+</script>
+{% endblock %}
