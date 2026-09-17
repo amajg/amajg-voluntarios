@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Carteirinha - {{ v.full_name }}{% endblock %}
+{% block title %}Carteirinha - {{ v.nome }}{% endblock %}
 {% block content %}
 <div class="flex flex-col items-center justify-center space-y-6">
     <div class="no-print flex space-x-4">
@@ -11,44 +11,44 @@
         </a>
     </div>
 
-    <!-- Padrão 9x5cm (w-[9cm] h-[5cm]) compacto para encaixar todos os dados -->
-    <div class="printable-card bg-white border-2 border-emerald-800 rounded-lg p-2 flex flex-col justify-between w-[9cm] h-[5cm] text-[7px] shadow-lg box-border">
+    <!-- Padrão 9x5cm harmônico e de alta legibilidade -->
+    <div class="printable-card bg-white border-2 border-emerald-800 rounded-xl p-2.5 flex flex-col justify-between w-[9cm] h-[5cm] shadow-xl box-border">
         <!-- Topo -->
-        <div class="flex items-center justify-between border-b pb-0.5 border-emerald-200">
-            <div class="flex items-center space-x-1">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" class="h-5 w-auto" alt="Logo">
+        <div class="flex items-center justify-between border-b pb-1 border-emerald-300">
+            <div class="flex items-center space-x-1.5">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" class="h-6 w-auto" alt="Logo">
                 <div>
-                    <h4 class="font-bold text-[8px] text-emerald-900 leading-none">AMAJG</h4>
-                    <p class="text-[5.5px] text-slate-500">Voluntariado Estudantil</p>
+                    <h4 class="font-extrabold text-[9.5px] text-emerald-900 leading-tight">AMAJG</h4>
+                    <p class="text-[6.5px] text-slate-600 font-medium">Voluntariado Estudantil</p>
                 </div>
             </div>
-            <span class="bg-emerald-100 text-emerald-900 font-mono font-bold text-[7px] px-1 py-0.5 rounded">
-                CÓD: {{ v.code }}
+            <span class="bg-emerald-800 text-white font-mono font-bold text-[7.5px] px-2 py-0.5 rounded-full shadow-sm">
+                CÓD: {{ v.codigo }}
             </span>
         </div>
 
-        <!-- Meio: Foto + Dados detalhados -->
-        <div class="flex items-center space-x-1.5 my-0.5">
-            <img src="{{ url_for('static', filename='uploads/' + v.photo) if v.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-10 h-12 object-cover rounded border border-emerald-700 bg-slate-100">
-            <div class="flex-1 overflow-hidden leading-tight">
-                <p class="font-bold text-[8.5px] text-slate-900 truncate">{{ v.full_name }}</p>
-                <p class="text-[6.5px] text-slate-600">CPF: {{ v.cpf }} • Nasc: {{ v.nascimento }}</p>
-                <p class="text-[6.5px] text-slate-600">Mat: {{ v.matricula }} • Val: {{ v.validade }}</p>
-                <p class="text-[7px] text-emerald-800 font-semibold truncate">{{ v.institution }}</p>
-                <p class="text-[6.5px] text-slate-500 truncate">{{ v.curso }} {% if v.period %}• {{ v.period }}{% endif %}</p>
+        <!-- Meio: Foto + Informações em destaque -->
+        <div class="flex items-center space-x-2.5 my-1">
+            <img src="{{ url_for('static', filename='uploads/' + v.photo) if v.photo != 'default_user.png' else url_for('static', filename='img/logo.png') }}" class="w-11 h-14 object-cover rounded-lg border-2 border-emerald-700 bg-slate-100 shadow-sm">
+            <div class="flex-1 overflow-hidden leading-snug">
+                <p class="font-extrabold text-[9.5px] text-slate-900 truncate">{{ v.nome }}</p>
+                <p class="text-[7.5px] text-slate-700 font-semibold">CPF: {{ v.cpf }} | Nasc: {{ v.nascimento }}</p>
+                <p class="text-[7.5px] text-slate-700 font-semibold">Mat: {{ v.matricula }} | Val: <span class="text-emerald-800 font-bold">{{ v.validade }}</span></p>
+                <p class="text-[7.5px] text-emerald-900 font-bold truncate mt-0.5">{{ v.instituicao }}</p>
+                <p class="text-[7px] text-slate-600 truncate">{{ v.curso }} {% if v.periodo %}• {{ v.periodo }}{% endif %}</p>
             </div>
-            <!-- QR code direcionando para /verify/<code> -->
-            <div id="qrcode-{{ v.code }}" class="bg-white p-0.5 rounded border border-slate-200"></div>
+            <!-- QR Code apontando estritamente para /public-query -->
+            <div id="qrcode-{{ v.codigo }}" class="bg-white p-1 rounded-lg border border-slate-300 shadow-sm"></div>
         </div>
 
         <!-- Rodapé: Lei + Assinatura Cursiva do Presidente -->
-        <div class="border-t pt-0.5 border-emerald-200 flex justify-between items-end text-[5.5px] text-slate-500">
-            <span>Lei nº 9.608/1998 • Belford Roxo/RJ</span>
+        <div class="border-t pt-1 border-emerald-200 flex justify-between items-end text-[6px] text-slate-600">
+            <span class="font-medium">Lei nº 9.608/1998 • Belford Roxo/RJ</span>
             <div class="text-right leading-tight">
-                <div style="font-family: 'Brush Script MT', 'Great Vibes', cursive, serif; font-size: 9px;" class="text-emerald-900 font-bold">
+                <div style="font-family: 'Brush Script MT', 'Great Vibes', cursive, serif; font-size: 10px;" class="text-emerald-900 font-bold">
                     José Luiz Mendes Rocha Campos
                 </div>
-                <div class="text-[5px] font-bold text-slate-700 tracking-wider">PRESIDENTE - AMAJG</div>
+                <div class="text-[5.5px] font-extrabold text-slate-800 tracking-wider">PRESIDENTE - AMAJG</div>
             </div>
         </div>
     </div>
@@ -57,12 +57,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const qrContainer = document.getElementById("qrcode-{{ v.code }}");
+        const qrContainer = document.getElementById("qrcode-{{ v.codigo }}");
         if (qrContainer) {
             new QRCode(qrContainer, {
-                text: "{{ url_for('verify_volunteer', codigo=v.code, _external=True) }}",
-                width: 38,
-                height: 38,
+                text: "https://amajg-voluntarios.onrender.com/public-query",
+                width: 42,
+                height: 42,
                 colorDark: "#065f46",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.M
